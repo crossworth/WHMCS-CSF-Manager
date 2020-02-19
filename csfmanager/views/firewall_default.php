@@ -9,6 +9,8 @@
  *
  **/
 
+use WHMCS\Database\Capsule;
+
 if (!defined("JETCSFMANAGER"))
 	die("This file cannot be accessed directly");
 
@@ -24,17 +26,20 @@ class jcsf_firewall_default
 		
 		$output['data']['servers'] = array();
 		
-		$sql = "SELECT *
-			FROM tblservers
-			" . (trim($instance->getConfig('servers', '')) ? "WHERE id IN (" . trim($instance->getConfig('servers', '')) . ")" : '');
-		$result = mysql_query($sql);
-		
-		while($server_details = mysql_fetch_assoc($result))
-		{
+        $builder = Capsule::table('tblservers');
+
+        if (trim($instance->getConfig('servers', ''))) {
+            $builder->whereIn('id', trim($instance->getConfig('servers', '')));
+        }
+
+        $result = $builder->get();
+
+        $resultAsArray = json_decode(json_encode($result), true);
+
+		foreach ($resultAsArray as $server_details) {
 			$output['data']['servers'][$server_details['id']] = array_merge($server_details, array('password' => decrypt($server_details['password'], $cc_encryption_hash)));
 		}
-		mysql_free_result($result);
-				
+
 		return $output;
 	}
 }
