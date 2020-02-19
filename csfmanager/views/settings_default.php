@@ -9,6 +9,8 @@
  *
  **/
 
+use WHMCS\Database\Capsule;
+
 if (!defined("JETCSFMANAGER"))
 	die("This file cannot be accessed directly");
 
@@ -23,18 +25,14 @@ class jcsf_settings_default
 		$instance = csfmanager::getInstance();
 		
 		$output['data']['servers'] = array();
-		
-		$sql = "SELECT *
-			FROM tblservers
-			WHERE hostname != ''
-			ORDER BY hostname ASC";
-		$result = mysql_query($sql);
-		
-		while($server_details = mysql_fetch_assoc($result))
-		{
-			$output['data']['servers'][$server_details['id']] = array_merge(array('selected' => in_array($server_details['id'], explode(',', $instance->getConfig('servers'))) ? true : false), $server_details);
-		}
-		mysql_free_result($result);
+
+		$result = Capsule::table('tblservers')->where('hostname', '!=', '')->orderBy('hostname', 'ASC')->get();
+
+        $resultAsArray = json_decode(json_encode($result), true);
+
+		foreach ($resultAsArray as $server_details) {
+            $output['data']['servers'][$server_details['id']] = array_merge(array('selected' => in_array($server_details['id'], explode(',', $instance->getConfig('servers'))) ? true : false), $server_details);
+        }
 
 		return $output;
 	}
