@@ -1,5 +1,7 @@
 <?php
 
+use WHMCS\Database\Capsule;
+
 if (!defined("WHMCS"))
 	die("This file cannot be accessed directly");
 
@@ -12,12 +14,10 @@ class csfmanager
 	{
 		global $LANG;
 
-		$sql = "SELECT *
-			FROM mod_csfmanager_config";
-		$result = mysql_query($sql);
+		$result = Capsule::table('mod_csfmanager_config')->get();
+		$resultAsArray = json_decode(json_encode($result), true);
 
-		while($config_details = mysql_fetch_assoc($result))
-		{
+		foreach ($resultAsArray as $config_details) {
 			if(preg_match("/^a:\d+:{.*?}$/", $config_details['value'])) 
 			{
 				$config_details['value'] = @unserialize($config_details['value']);
@@ -25,7 +25,6 @@ class csfmanager
 
 			$this->config[$config_details['name']] = $config_details['value'];
 		}
-		mysql_free_result($result);
 
 		$this->_loadLanguage();
 	}
